@@ -12,13 +12,13 @@ chmod +x simulate.sh
 
 ```
 
-Next, use the `trace.sh` script to trace the command you want. The first argument should be the command to be traced, and the second argument should be the path to Scarab installation.
+Next, use the `trace.sh` script to trace the command you want. The first argument should be the path to Scarab installation, and the second argument should be the command to be traced 
 
 For example, to trace the `ls` command where Scarab is located at `~/scarab` directory, run:
 
 ```
 
-./trace.sh ls ~/scarab
+./trace.sh ~/scarab ls
 
 ```
 
