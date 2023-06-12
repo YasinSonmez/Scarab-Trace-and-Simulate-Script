@@ -24,7 +24,8 @@ cd $traces_path
 bash $scarab_path/utils/memtrace/run_portabilize_trace.sh
 echo "4. Portabilizing the trace file ended"
 
-cd *$2* #Find the trace file with the command name
+base_file_name=$(basename "$2")
+cd *$base_file_name* #Find the trace file with the command name
 trace_path="$(pwd)/trace"
 bin_path="$(pwd)/bin"
 echo "Trace path: " ${trace_path}
