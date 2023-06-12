@@ -2,7 +2,7 @@
 echo "Current path: " $main_path
 main_path=$(pwd)
 
-scarab_path=$2
+scarab_path=$1
 echo "Scarab path: " $scarab_path
 
 current_time=$(date +'%Y-%m-%d_%H-%M-%S')
@@ -16,7 +16,7 @@ mkdir -p "$simulation_path"
 echo "2. Created the simulation path: " $simulation_path
 
 echo "3. Starting tracing"
-$scarab_path/src/build/opt/deps/dynamorio/bin64/drrun -t drcachesim -offline -outdir $traces_path -- $1
+$scarab_path/src/build/opt/deps/dynamorio/bin64/drrun -t drcachesim -offline -outdir $traces_path -- $2
 echo "3. Tracing ended"
 
 echo "4. Portabilizing the trace file started"
@@ -24,7 +24,7 @@ cd $traces_path
 bash $scarab_path/utils/memtrace/run_portabilize_trace.sh
 echo "4. Portabilizing the trace file ended"
 
-cd *$1* #Find the trace file with the command name
+cd *$2* #Find the trace file with the command name
 trace_path="$(pwd)/trace"
 bin_path="$(pwd)/bin"
 echo "Trace path: " ${trace_path}
