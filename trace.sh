@@ -19,7 +19,15 @@ echo -e "2. Created the simulation path: " $simulation_path "\n"
 echo "3. Starting tracing"
 cd $traces_path
 cp $main_path/../params.json $timed_path
-./../../$2
+cp $main_path/../state_and_input_matrix.csv $timed_path
+#./../../$2
+# Number of iterations
+num_iterations=10
+# Run the C++ program in a loop
+for ((i = 1; i <= num_iterations; i++)); do
+    echo "Running iteration $i..."
+    ./../../$2 $i
+done
 echo -e "3. Tracing ended\n"
 
 echo "4. Portabilizing the trace file started"
