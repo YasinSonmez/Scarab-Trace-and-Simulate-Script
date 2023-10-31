@@ -19,14 +19,14 @@ echo -e "2. Created the simulation path: " $simulation_path "\n"
 echo "3. Starting tracing"
 cd $traces_path
 cp $main_path/../params.json $timed_path
-cp $main_path/../state_and_input_matrix.csv $timed_path
-#./../../$2
+# run the dynamics simulation and record states
+./../../$2
 # Number of iterations
 num_iterations=10
 # Run the C++ program in a loop
 for ((i = 1; i <= num_iterations; i++)); do
     echo "Running iteration $i..."
-    ./../../$2 $i
+    ./../../$3 $i 1 #Run tracing from ith step for 1 step
 done
 echo -e "3. Tracing ended\n"
 
@@ -70,19 +70,3 @@ while read -r subfolder; do
     echo -e "5. Simulation commands are written to tmp.txt file \n"
 done
 cp  ${timed_path}/tmp.txt ${main_path}
-<<COMMENT
-trace_path="$(pwd)/trace"
-bin_path="$(pwd)/bin"
-echo "Trace path: " ${trace_path}
-echo "Bin path: " ${bin_path}
-
-cd $main_path
-cp PARAMS.in $simulation_path
-
-echo "cd ${simulation_path}" > tmp.txt
-command="${scarab_path}/src/scarab --frontend memtrace --fetch_off_path_ops 0 --cbp_trace_r0=${trace_path} --memtrace_modules_log=${bin_path}"
-echo "5. Simulation commands are written to tmp.txt file"
-
-echo $command>>tmp.txt
-
-COMMENT

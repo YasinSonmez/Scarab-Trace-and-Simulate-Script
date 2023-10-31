@@ -2,6 +2,9 @@
 input="./tmp.txt"
 while IFS= read -r line
 do
-  echo "$line"
-  $line
+  {
+    echo "$line"
+    $line
+  } & 
 done < "$input"
+wait
