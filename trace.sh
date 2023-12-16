@@ -1,6 +1,6 @@
 #! /usr/bin/bash
-echo "Current path: " $main_path
 main_path=$(pwd)
+echo "Current path: " $main_path
 
 scarab_path=$1
 echo "Scarab path: " $scarab_path
@@ -20,12 +20,15 @@ echo "3. Starting tracing"
 cd $traces_path
 cp $main_path/../params.json $timed_path
 # run the dynamics simulation and record states
-./../../$2
-# Number of iterations
-num_iterations=10
-# Run the C++ program in a loop
-for ((i = 1; i <= num_iterations; i++)); do
-    echo "Running iteration $i..."
+# start from a certain position
+start_from=$4
+# Number of iterations (Number of cores)
+num_timesteps=$5
+./../../$2 $4 $5
+
+# Run tracing C++ program in a loop
+for ((i = start_from; i <= start_from+num_timesteps; i++)); do
+    echo "Running timestep $i..."
     ./../../$3 $i 1 #Run tracing from ith step for 1 step
 done
 echo -e "3. Tracing ended\n"
@@ -45,6 +48,7 @@ counter=0
 # Create a txt file to store commands
 cd ${timed_path}
 touch tmp.txt
+touch tmp2.txt
 find "$traces_path" -mindepth 1 -maxdepth 1 -type d -printf "%T@ %p\n" | sort -n | cut -d ' ' -f2- |
 while read -r subfolder; do
     # Increment the counter
@@ -67,6 +71,8 @@ while read -r subfolder; do
     echo "cd ${simulation_path_i}" >> tmp.txt
     command="${scarab_path}/src/scarab --frontend memtrace --fetch_off_path_ops 0 --cbp_trace_r0=${trace_path} --memtrace_modules_log=${bin_path}"
     echo $command>>tmp.txt
-    echo -e "5. Simulation commands are written to tmp.txt file \n"
 done
+echo "cd $main_path/..">>tmp2.txt
+echo "python plot_cycles.py ${simulation_path}">>tmp2.txt
+echo -e "5. Simulation commands are written to tmp.txt file \n"
 cp  ${timed_path}/tmp.txt ${main_path}
