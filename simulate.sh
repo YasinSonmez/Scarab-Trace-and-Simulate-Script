@@ -1,6 +1,7 @@
 #! /usr/bin/bash
-input="./tmp.txt"
-input2="./tmp2.txt"
+main_path=$(pwd)
+input="./../tmp.txt"
+input2="./../tmp2.txt"
 counter=0
 while IFS= read -r line; do
   ((counter++))
@@ -12,7 +13,7 @@ while IFS= read -r line; do
   fi
 done < "$input"
 wait
-cd ../..
+cd $main_path
 while IFS= read -r line; do
   echo "$line"
   $line
