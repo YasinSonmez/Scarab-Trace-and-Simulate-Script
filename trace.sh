@@ -34,6 +34,8 @@ echo -e "2. Created the simulation path: " $simulation_path "\n"
 
 echo "3. Starting tracing"
 cp $main_path/../../params.json $timesteps_path
+cp $main_path/../../params.json $traces_path
+
 # run the dynamics simulation and record states
 cd $traces_path
 # if restart flag is true give an extra parameter to the code
@@ -48,6 +50,12 @@ fi
 # Run tracing C++ program in a loop
 for ((i = start_from; i < start_from+num_timesteps; i++)); do
     echo "Running timestep $i..."
+    # Define the simulation path for the current timestep
+    trace_path_i="${traces_path}/Timestep_${i}"
+    # Ensure the directory for the current timestep exists
+    mkdir -p "${trace_path_i}"
+    echo "Created directory for timestep $i at ${trace_path_i}"
+    cd "${trace_path_i}"
     # if restart flag is true give an extra parameter to the code
     if [ "$6" = "true" ] && [ "$i" -eq start_from ]; then
         echo "11111111111111111111111111111111111111111"
@@ -60,11 +68,25 @@ for ((i = start_from; i < start_from+num_timesteps; i++)); do
 done
 echo -e "3. Tracing ended\n"
 
-echo "4. Portabilizing the trace file started"
-cd $traces_path
-bash $scarab_path/utils/memtrace/run_portabilize_trace.sh
+echo -e "4. Portabilizing the trace file started"
+# Path to the portabilizing script
+PORTABILIZE_SCRIPT="${main_path}/../run_portabilize_trace.sh"
+# Navigate to the base directory where the subfolders are located
+cd "$traces_path"
+# Start a subshell for background processing
+{
+    for subfolder in */; do
+        if [ -d "$subfolder" ]; then
+            # Run the portabilizing script in the background within the subshell
+            (cd "$subfolder" && bash "${PORTABILIZE_SCRIPT}") &
+        fi
+    done
+    # Wait for all background processes started within this subshell
+    wait
+} &
+# Wait for the subshell itself to complete
+wait
 echo -e "4. Portabilizing the trace file ended \n"
-
 
 base_file_name=$(basename "$2")
 #cd *$base_file_name* #Find the trace file with the command name
@@ -76,33 +98,37 @@ counter=0
 cd ${timesteps_path}
 touch tmp.txt
 touch tmp2.txt
-find "$traces_path" -mindepth 1 -maxdepth 1 -type d -printf "%T@ %p\n" | sort -n | cut -d ' ' -f2- |
-while read -r subfolder; do
-    # Increment the counter
-    # Perform your desired operations here, for example, echo the subfolder name
-    echo "Processing subfolder $counter: $subfolder"
-    # Add your additional commands here, such as copying, moving, or processing files within the subfolder.
-    # Example: cp source_file destination_directory
-    cd $subfolder
-    trace_path="$(pwd)/trace"
-    bin_path="$(pwd)/bin"
-    echo "Trace path: " ${trace_path}
-    echo "Bin path: " ${bin_path}
-    
+while [ "$counter" -lt "$num_timesteps" ]; do
     current_timestep=$((start_from + counter))
-    simulation_path_i=${simulation_path}/Timestep_${current_timestep}
-    mkdir ${simulation_path_i}
-    cd ${main_path}
-    cd ..
-    cp PARAMS.in ${simulation_path_i}
-    cd ${timesteps_path}
-    echo "cd ${simulation_path_i}" >> tmp.txt
-    command="${scarab_path}/src/scarab --frontend memtrace --fetch_off_path_ops 0 --cbp_trace_r0=${trace_path} --memtrace_modules_log=${bin_path}"
-    echo $command>>tmp.txt
+    timestep_dir="${traces_path}/Timestep_${current_timestep}"
+    
+    # Check if the directory exists
+    if [ -d "$timestep_dir" ]; then
+        subfolder=$(find "$timestep_dir" -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
+        echo "Processing subfolder $counter: $subfolder"
+        cd "$subfolder" || exit 1
+        trace_path="$(pwd)/trace"
+        bin_path="$(pwd)/bin"
+        echo -e "Trace path: ${trace_path}\n"
+        echo -e "Bin path: ${bin_path}\n"    
+    
+        simulation_path_i="${simulation_path}/Timestep_${current_timestep}"
+        mkdir -p "${simulation_path_i}"
+        cd "${main_path}" || exit 1
+        cd .. || exit 1
+        cp PARAMS.in "${simulation_path_i}"
+        cd "${timesteps_path}" || exit 1
+        echo "cd ${simulation_path_i}" >> tmp.txt
+        command="${scarab_path}/src/scarab --frontend memtrace --fetch_off_path_ops 0 --cbp_trace_r0=${trace_path} --memtrace_modules_log=${bin_path}"
+        echo "$command" >> tmp.txt
+    else
+        echo "Timestep directory not found: $timestep_dir"
+    fi
+    
     ((counter++))
 done
 echo "cd $main_path">>tmp2.txt
-echo "python ./../../plot_cycles.py ${simulation_path}">>tmp2.txt
+echo "python3 ./../../plot_cycles.py ${simulation_path}">>tmp2.txt
 echo -e "5. Simulation commands are written to tmp.txt file \n"
 cp  ${timesteps_path}/tmp.txt ${main_path}/..
 cp  ${timesteps_path}/tmp2.txt ${main_path}/..
