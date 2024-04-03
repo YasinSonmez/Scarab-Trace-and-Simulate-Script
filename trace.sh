@@ -96,8 +96,8 @@ base_file_name=$(basename "$2")
 counter=0
 # Create a txt file to store commands
 cd ${timesteps_path}
-touch tmp.txt
-touch tmp2.txt
+touch simulation_commands.txt
+touch plot_commands.txt
 while [ "$counter" -lt "$num_timesteps" ]; do
     current_timestep=$((start_from + counter))
     timestep_dir="${traces_path}/Timestep_${current_timestep}"
@@ -118,17 +118,17 @@ while [ "$counter" -lt "$num_timesteps" ]; do
         cd .. || exit 1
         cp PARAMS.in "${simulation_path_i}"
         cd "${timesteps_path}" || exit 1
-        echo "cd ${simulation_path_i}" >> tmp.txt
+        echo "cd ${simulation_path_i}" >> simulation_commands.txt
         command="${scarab_path}/src/scarab --frontend memtrace --fetch_off_path_ops 0 --cbp_trace_r0=${trace_path} --memtrace_modules_log=${bin_path}"
-        echo "$command" >> tmp.txt
+        echo "$command" >> simulation_commands.txt
     else
         echo "Timestep directory not found: $timestep_dir"
     fi
     
     ((counter++))
 done
-echo "cd $main_path">>tmp2.txt
-echo "python3 ./../../plot_cycles.py ${simulation_path}">>tmp2.txt
-echo -e "5. Simulation commands are written to tmp.txt file \n"
-cp  ${timesteps_path}/tmp.txt ${main_path}/..
-cp  ${timesteps_path}/tmp2.txt ${main_path}/..
+echo "cd $main_path">>plot_commands.txt
+echo "python3 ./../../plot_cycles.py ${simulation_path}">>plot_commands.txt
+echo -e "5. Simulation commands are written to simulation_commands.txt file \n"
+cp  ${timesteps_path}/simulation_commands.txt ${main_path}/..
+cp  ${timesteps_path}/plot_commands.txt ${main_path}/..

@@ -1,6 +1,6 @@
 #! /usr/bin/bash
 main_path=$(pwd)
-input2="./../tmp2.txt"
+input2="./../plot_commands.txt"
 while IFS= read -r line; do
   echo "$line"
   eval "$line"

@@ -1,6 +1,6 @@
 #! /usr/bin/bash
 main_path=$(pwd)
-input="./../tmp.txt"
+input="./../simulation_commands.txt"
 declare -a pids  # Array to store process IDs
 counter=0
 while IFS= read -r line; do
