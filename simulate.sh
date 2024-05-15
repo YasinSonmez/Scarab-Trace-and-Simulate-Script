@@ -1,6 +1,5 @@
 #! /usr/bin/bash
-main_path=$(pwd)
-input="./../simulation_commands.txt"
+input="$1/simulation_commands.txt"
 declare -a pids  # Array to store process IDs
 counter=0
 while IFS= read -r line; do
@@ -17,4 +16,4 @@ done < "$input"
 for pid in "${pids[@]}"; do
   wait "$pid"
 done
-sleep 10
+sleep 1

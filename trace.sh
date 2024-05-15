@@ -1,17 +1,31 @@
 #! /usr/bin/bash
 main_path=$(pwd)
 echo "Current path: " $main_path
+script_path="${main_path}/../../.."
 
 scarab_path=$1
 echo "Scarab path: " $scarab_path
 
+simulation_executable=$2
+
 # start from a certain position
-start_from=$4
+start_from=$3
 # Number of iterations (Number of cores)
-num_timesteps=$5
+num_timesteps=$4
 last_timestep=$((start_from + num_timesteps-1))
 
-timesteps_path=$main_path"/Timesteps_${start_from}-${last_timestep}"
+restart_flag=$5
+chip_params_path=$6
+controller_params_path=$7
+control_sampling_time=$8
+
+if [ "$restart_flag" = false ] && [ "$start_from" -eq 1 ]; then
+    start_simulation_from=0
+else
+    start_simulation_from="$start_from"
+fi
+
+timesteps_path=$main_path"/Timesteps_${start_simulation_from}-${last_timestep}"
 # Check if the timesteps_path exists
 if [ -e "$timesteps_path" ]; then
     echo "Path exists: $timesteps_path"
@@ -32,21 +46,22 @@ echo "1. Created the traces path: " $traces_path
 mkdir -p "$simulation_path"
 echo -e "2. Created the simulation path: " $simulation_path "\n"
 
-echo "3. Starting tracing"
-cp $main_path/../../params.json $timesteps_path
-cp $main_path/../../params.json $traces_path
+echo "3. Starting tracing: $controller_params_path"
+cp $controller_params_path $timesteps_path
+cp $controller_params_path $traces_path
 
 # run the dynamics simulation and record states
 cd $traces_path
 # if restart flag is true give an extra parameter to the code
-if [ "$6" = "true" ]; then
-    echo "Sim: 11111111111111111111111111111111111111111"
-    $main_path/$2 $start_from $num_timesteps 1
+if [ "$restart_flag" = "true" ]; then
+    echo "Sim: mod 0"
+    $simulation_executable $start_simulation_from $num_timesteps 0 1 #Run simulation from ith step for 1 step w/ restart
 else
-    echo "Sim: 22222222222222222222222222222222222222222"
-    $main_path/$2 $start_from $num_timesteps 
+    echo "Sim: mod default"
+    $simulation_executable $start_simulation_from $num_timesteps 0 0 #Run simulation from ith step for 1 step without restart
 fi
-
+wait
+sleep 1
 # Run tracing C++ program in a loop
 for ((i = start_from; i < start_from+num_timesteps; i++)); do
     echo "Running timestep $i..."
@@ -57,20 +72,20 @@ for ((i = start_from; i < start_from+num_timesteps; i++)); do
     echo "Created directory for timestep $i at ${trace_path_i}"
     cd "${trace_path_i}"
     # if restart flag is true give an extra parameter to the code
-    if [ "$6" = "true" ] && [ "$i" -eq start_from ]; then
-        echo "11111111111111111111111111111111111111111"
-        $main_path/$3 $i 1 1 #Run tracing from ith step for 1 step
+    if [[ "$restart_flag" == "true" ]] && [[ "$i" -eq "$start_from" ]]; then
+        echo "tracing, mod 2"
+        $simulation_executable $i 1 1 1 #Run tracing from ith step for 1 step w/ restart
     else
-        echo "2222222222222222222222222222222222222222"
+        echo "tracing, mod 1"
         echo $num_timesteps
-        $main_path/$3 $i 1 #Run tracing from ith step for 1 step
+        $simulation_executable $i 1 1 0 #Run tracing from ith step for 1 step without restart
     fi
 done
 echo -e "3. Tracing ended\n"
 
 echo -e "4. Portabilizing the trace file started"
 # Path to the portabilizing script
-PORTABILIZE_SCRIPT="${main_path}/../run_portabilize_trace.sh"
+PORTABILIZE_SCRIPT="${script_path}/run_portabilize_trace.sh"
 # Navigate to the base directory where the subfolders are located
 cd "$traces_path"
 # Start a subshell for background processing
@@ -116,10 +131,11 @@ while [ "$counter" -lt "$num_timesteps" ]; do
         mkdir -p "${simulation_path_i}"
         cd "${main_path}" || exit 1
         cd .. || exit 1
-        cp PARAMS.in "${simulation_path_i}"
+        echo "New path: ${simulation_path_i}/PARAMS.in"
+        cp "$chip_params_path" "${simulation_path_i}/PARAMS.in"
         cd "${timesteps_path}" || exit 1
         echo "cd ${simulation_path_i}" >> simulation_commands.txt
-        command="${scarab_path}/src/scarab --frontend memtrace --fetch_off_path_ops 0 --cbp_trace_r0=${trace_path} --memtrace_modules_log=${bin_path}"
+        command="${scarab_path}/src/scarab --fdip_enable 0 --frontend memtrace --fetch_off_path_ops 0 --cbp_trace_r0=${trace_path} --memtrace_modules_log=${bin_path}"
         echo "$command" >> simulation_commands.txt
     else
         echo "Timestep directory not found: $timestep_dir"
@@ -128,7 +144,7 @@ while [ "$counter" -lt "$num_timesteps" ]; do
     ((counter++))
 done
 echo "cd $main_path">>plot_commands.txt
-echo "python3 ./../../plot_cycles.py ${simulation_path}">>plot_commands.txt
+echo "python3 ${script_path}/../plot_cycles.py ${simulation_path} ${control_sampling_time}">>plot_commands.txt
 echo -e "5. Simulation commands are written to simulation_commands.txt file \n"
-cp  ${timesteps_path}/simulation_commands.txt ${main_path}/..
-cp  ${timesteps_path}/plot_commands.txt ${main_path}/..
+# cp  ${timesteps_path}/simulation_commands.txt ${main_path}/..
+# cp  ${timesteps_path}/plot_commands.txt ${main_path}/..
