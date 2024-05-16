@@ -10,7 +10,7 @@ for dir in */; do
         cp raw/modules.log bin/modules.log
         python2 "${SCRIPT_DIR}/portabilize_trace.py" .
         cp bin/modules.log raw/modules.log
-        /home/yasin/scarab/src/build/opt/deps/dynamorio/clients/bin64/drraw2trace -indir ./raw/
+        ${RESOURCES_DIR}/scarab/src/build/opt/deps/dynamorio/clients/bin64/drraw2trace -indir ./raw/
         rm -rf ./raw
         cd -
     } &
