@@ -1,31 +1,10 @@
 # Scarab-Trace-and-Simulate-Script
 ## Installation
-Scarab and DynamoRio needs to be installed to first trace and then simulate a command.
+Scarab and DynamoRio must be installed to trace and simulate a command first.
 ## Instructions
-To make the files executable, run the following commands in your terminal:
+These scripts automate tracing with Dynamorio, simulate using Scarab, and plot the results. The `RESOURCES_DIR` environment variable must be defined as the parent directory where the scarab folder is located.
 
+Usage:
 ```
-
-chmod +x trace.sh
-
-chmod +x simulate.sh
-
-```
-
-Next, use the `trace.sh` script to trace the command you want. The first argument should be the path to Scarab installation, and the second argument should be the command to be traced 
-
-For example, to trace the `ls` command where Scarab is located at `~/scarab` directory, run:
-
-```
-
-./trace.sh ~/scarab ls
-
-```
-
-This will create a subfolder in the current directory with the name as the current date and time. Inside it, there will be a `trace` folder and a `simulation` folder. You can now run the Scarab simulation using the dedicated script:
-
-```
-
-./simulate.sh
-
+./trace.sh <scarab_path> <simulation_executable> <start_from> <num_timesteps> <restart_flag> <chip_params_path> <controller_params_path> <control_sampling_time>
 ```
