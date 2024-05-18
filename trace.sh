@@ -51,12 +51,16 @@ simulation_path=$timesteps_path/simulation
 
 # Create the necessary directories
 mkdir -p "$traces_path"
-echo "1. Created the traces path: $traces_path\n"
+echo "1. Created the traces path: $traces_path"
+echo ""
 
 mkdir -p "$simulation_path"
-echo -e "2. Created the simulation path: $simulation_path\n"
+echo -e "2. Created the simulation path: $simulation_path"
+echo ""
 
-echo "3. Starting tracing using controller parameters file: $controller_params_path\n"
+echo "3. Starting tracing using controller parameters file: $controller_params_path"
+echo ""
+
 cp $controller_params_path $timesteps_path
 cp $controller_params_path $traces_path
 
@@ -75,6 +79,7 @@ sleep 1
 
 # Run tracing in a loop for each timestep
 for ((i = start_from; i < start_from + num_timesteps; i++)); do
+    echo ""
     echo "Running timestep $i..."
     trace_path_i="${traces_path}/Timestep_${i}"
     mkdir -p "${trace_path_i}"
@@ -91,9 +96,11 @@ for ((i = start_from; i < start_from + num_timesteps; i++)); do
         $simulation_executable $i 1 1 0
     fi
 done
-echo -e "3. Tracing ended\n"
+echo -e "3. Tracing ended"
+echo ""
 
 echo -e "4. Portabilizing the trace file started"
+echo ""
 
 # Define the portabilize script path
 PORTABILIZE_SCRIPT="${script_path}/run_portabilize_trace.sh"
@@ -109,7 +116,8 @@ cd "$traces_path"
     wait
 } &
 wait
-echo -e "4. Portabilizing the trace file ended \n"
+echo -e "4. Portabilizing the trace file ended "
+echo ""
 
 # Define the base file name from the second argument
 base_file_name=$(basename "$2")
@@ -127,18 +135,20 @@ while [ "$counter" -lt "$num_timesteps" ]; do
 
     if [ -d "$timestep_dir" ]; then
         subfolder=$(find "$timestep_dir" -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)
+        echo ""
         echo "Processing subfolder $counter: $subfolder"
         cd "$subfolder" || exit 1
         trace_path="$(pwd)/trace"
         bin_path="$(pwd)/bin"
-        echo -e "Trace path: ${trace_path}\n"
-        echo -e "Bin path: ${bin_path}\n"    
+        echo -e "Trace path: ${trace_path}"
+        echo -e "Bin path: ${bin_path}"    
 
         simulation_path_i="${simulation_path}/Timestep_${current_timestep}"
         mkdir -p "${simulation_path_i}"
         cd "${main_path}" || exit 1
         cd .. || exit 1
         echo "New path: ${simulation_path_i}/PARAMS.in"
+        echo ""
         cp "$chip_params_path" "${simulation_path_i}/PARAMS.in"
         cd "${timesteps_path}" || exit 1
         echo "cd ${simulation_path_i}" >> simulation_commands.txt
@@ -155,4 +165,4 @@ done
 # Write plot commands to the plot_commands.txt file
 echo "cd $main_path" >> plot_commands.txt
 echo "python3 ${script_path}/../plot_cycles.py ${simulation_path} ${control_sampling_time}" >> plot_commands.txt
-echo -e "5. Simulation commands are written to simulation_commands.txt file \n"
+echo -e "5. Simulation commands are written to simulation_commands.txt file "
